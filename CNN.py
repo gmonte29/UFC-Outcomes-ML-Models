@@ -1,23 +1,26 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from tensorflow.keras import models, layers
-from tensorflow.keras.callbacks import ModelCheckpoint
-import time
+import tensorflow as tf
+import matplotlib.pyplot as plt
 
 
+#preprocess data, expects the training data to be saved separately in a file with the name shown
 dataframe = pd.read_csv("preprocessed_data.csv", header=0)
 
 dataframe['Winner'] = dataframe['Winner'].apply(lambda x: 1 if x == 'Red' else 0).astype(int)
 dataframe['title_bout'] = dataframe['title_bout'].apply(lambda x: 1 if x == True else 0).astype(int)
 
-
 # Separate features and target variable
 X = dataframe.drop('Winner', axis=1)
 y = dataframe['Winner']
 
+# Separate into training, validation, and test
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.15, random_state=42)
 X_train, X_validate, y_train, y_validate = train_test_split(X_train, y_train, test_size=.2, random_state=42)
 
+#call back for tensorboard
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="./logs",update_freq=1,histogram_freq=1)
 
 '''
 This model consists of a 1D convolutional layer followed by max pooling, 
@@ -38,22 +41,34 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
 
 epochs = 15
 
-start_time = time.time()
+model.fit(X_train, y_train, epochs=epochs, batch_size=64, validation_data=(X_validate, y_validate), callbacks=[tensorboard_callback])
 
-checkpoint = ModelCheckpoint("cnn_model.h5", save_best_only=True, monitor= 'val_loss', mode='min', verbose=1)
-model.fit(X_train, y_train, epochs=epochs, validation_data=(X_validate, y_validate), callbacks = [checkpoint])
 
-print()
-end_time = time.time()
-training_time = end_time - start_time
-print()
+#code for visualizing the convolutional filters post training
+weights = model.layers[0].get_weights()[0]
 
-best_model = models.load_model("cnn_model.h5")
+if len(weights.shape) == 3:
+    fig, axs = plt.subplots(1, weights.shape[2], figsize=(15, 5))  # Adjust figsize as needed
 
-test_loss, test_acc = best_model.evaluate(X_test, y_test)
+    for i in range(weights.shape[2]):
+        axs[i].imshow(weights[:, :, i], cmap='gray', vmin=weights.min(), vmax=weights.max())
+        axs[i].set_title(f'Filter {i+1}')
+        axs[i].axis('off')
 
+        for j in range(weights.shape[0]):
+            for k in range(weights.shape[1]):
+                axs[i].text(k, j, f'{weights[j, k, i]:.2f}', ha='center', va='center', fontsize=6, color='r')
+
+    plt.show()
+else:
+    print("The weights do not have the expected 3 dimensions.")
+
+
+#print accuracy on test set
+test_loss, test_acc = model.evaluate(X_test, y_test)
 print(f'Test accuracy: {test_acc}')
-print(print(f"Training time: {training_time} seconds"))
+
+
 
 
 
