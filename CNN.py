@@ -52,7 +52,6 @@ if len(weights.shape) == 3:
 
     for i in range(weights.shape[2]):
         axs[i].imshow(weights[:, :, i], cmap='gray', vmin=weights.min(), vmax=weights.max())
-        axs[i].set_title(f'Filter {i+1}')
         axs[i].axis('off')
 
         for j in range(weights.shape[0]):
