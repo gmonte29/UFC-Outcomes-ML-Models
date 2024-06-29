@@ -12,6 +12,6 @@ make install:
 
 make clean:
 	rm preprocessed_data.csv
-	conda deactivate
+	source deactivate
 	rm -r UFC_ENV
 	rm -r logs
