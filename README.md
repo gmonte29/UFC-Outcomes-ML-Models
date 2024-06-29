@@ -1,6 +1,6 @@
 Programs for training a CNN model using a UFC outcome dataset
 
-CNN.py - model training using a CPU. Includes plot of the resulting weights following training
+CNN.py - model training using a CPU. Includes plot of the resulting weights following training  
 CNN_distribute.py - model for distributing training across multiple GPUs if available
 
 Running the python files trains the model and outputs the accuracy on unseen data (~= 65% accuracy)
